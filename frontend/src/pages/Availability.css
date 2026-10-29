@@ -1,0 +1,82 @@
+/* ===== Layout: calendar on the left, preferences on the right ===== */
+.avail-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 16px;
+  margin-top: 20px;
+  align-items: start;
+}
+
+/* ===== Panel header ===== */
+.panel-head { display: flex; align-items: center; justify-content: space-between; }
+.link-btn { border: 0; background: none; padding: 0; font-size: 11px; font-weight: 600; color: var(--primary); cursor: pointer; }
+.link-btn:hover { text-decoration: underline; }
+
+/* ===== Legend ===== */
+.legend { display: flex; gap: 6px; margin: 12px 0 16px; }
+.chip {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+.chip.preferred { background: var(--primary-soft); border-color: var(--primary-line); color: var(--primary); }
+.chip.possible { background: #fff; border: 1px dashed var(--primary-line); color: var(--primary); }
+.chip.unavailable { background: #f0f1f8; color: var(--muted); }
+
+/* ===== Calendar grid ===== */
+.avail-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+.day-head { text-align: center; font-size: 11px; font-weight: 600; padding-bottom: 2px; }
+.cell {
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.cell:hover { border-color: var(--primary-line); }
+.cell.preferred {
+  background: var(--primary-soft);
+  border-color: var(--primary-line);
+  color: var(--primary);
+  font-weight: 600;
+}
+.cell.possible {
+  background: #fff;
+  border: 1px dashed var(--primary);
+  color: var(--primary);
+}
+
+/* ===== Session preferences column ===== */
+.avail-side { display: grid; gap: 10px; }
+.prefs { display: grid; gap: 14px; }
+.pref { display: grid; gap: 6px; }
+.pref > span { font-size: 11px; font-weight: 600; }
+.pref .input { height: 36px; font-size: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-btn {
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.chip-btn.on { background: var(--primary-soft); border-color: var(--primary-line); color: var(--primary); font-weight: 600; }
+
+/* ===== Responsive ===== */
+@media (max-width: 960px) {
+  .avail-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .avail-grid { gap: 4px; }
+  .cell { font-size: 10px; height: 36px; }
+}

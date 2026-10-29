@@ -1,0 +1,55 @@
+/* ===== Centering: whole right side (heading + card) ===== */
+.q-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: 0 auto;
+}
+
+/* ===== Card ===== */
+.q-panel { margin-top: 20px; width: 100%; max-width: 520px; text-align: left; }
+
+/* ===== Form layout ===== */
+.q-form { display: grid; gap: 16px; }
+.q-field { display: grid; gap: 6px; }
+.q-field label, .q-field > span { font-size: 11px; font-weight: 600; }
+.q-field .input { height: 36px; font-size: 12px; }
+.q-hint { font-size: 12px; color: var(--muted); }
+
+/* ===== Add-a-course row ===== */
+.q-add-row { display: flex; gap: 8px; align-items: center; }
+.q-add-row .input { flex: 1; min-width: 0; }
+.q-add-row .btn
+{
+  flex: none;
+  width: auto;
+  height: 36px;
+  padding: 0 16px;
+  font-size: 12px;
+}
+
+/* ===== Selectable chips (courses, goals, styles) ===== */
+.q-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.q-chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.q-chip:hover { border-color: var(--primary-line); }
+.q-chip.on {
+  background: var(--primary-soft);
+  border-color: var(--primary-line);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ===== Back / Next buttons ===== */
+.q-actions { display: flex; gap: 10px; margin-top: 20px; }
+.q-actions .btn { flex: 1; }
+.q-actions .btn:disabled { opacity: 0.5; cursor: not-allowed; }

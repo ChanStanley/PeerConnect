@@ -1,74 +1,93 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import Logo from '../components/Logo.jsx'
-import './Register.css'
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import Logo from "../components/Logo.jsx";
+import "../components/flow-layout.css"; // shared sidebar layout
+import "./Register.css";
 
-//TODO: the values here should come from the user itself
-const PROFILE = {
-    campus: 'Hunter College - CUNY',
-    courses: 'CSCI 135 - CSCI 150 - MATH 150',
-    goals: 'Maintain 3.5 GPA or higher - study weekly',
-    style: 'Quiet - focused - collaborative',
-    availability: 'Weekdays 8pm-10pm - Weekends 12pm-10pm',
+// Base URL of the FastAPI backend
+const API = "http://127.0.0.1:8000";
+
+// Steps shown in the sidebar (Account is the current one on this page)
+const STEPS = [
+  { title: "Account", detail: "School or personal email" },
+  { title: "Campus", detail: "Coming up next" },
+  { title: "Courses", detail: "Coming up next" },
+  { title: "Goals & style", detail: "Coming up next" },
+  { title: "Availability", detail: "Coming up next" },
+];
+const CURRENT_STEP = 1;
+
+// ===== Helpers =====
+// Turns a backend error response into a readable message.
+// FastAPI sends either a string ("detail": "...") or a list of validation errors.
+function getMessage(data) 
+{
+  if (typeof data?.detail === "string") return data.detail;
+  if (Array.isArray(data?.detail)) return data.detail.map((d) => d.msg).join(" ");
+  return "Something went wrong. Please try again.";
 }
 
-const CURRENT_STEP = 1 //TODO: this should come from the user itself
-const TOTAL_STEPS = 5
+export default function Register() 
+{
+  const navigate = useNavigate();
 
-const DAYS = ['Sun', 'Mon', 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat']
-const TIMES = ['9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM', '6 PM', '7 PM', '8 PM', '9 PM']
+  // ===== State =====
+  // form: values typed into the inputs (keys match what /auth/register expects)
+  // error: message shown under the form if something fails
+  // loading: disables the button while a request is in progress
+  const [form, setForm] = useState({ full_name: "", email: "", password: "" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-// Click a cell to cycle: unavailable -> preferred -> possible -> unavailable
-const NEXT = { unavailable: 'preferred', preferred: 'possible', possible: 'unavailable' }
+  // ===== Input handler =====
+  // Updates the matching field in `form` using the input's name attribute
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
 
-const LENGTHS = ['30–45 minutes', '45–60 minutes', '60–90 minutes', '90+ minutes']
-const GROUP_SIZES = ['2–3 students', '2–4 students', '4–6 students']
-const PLACES = ['Library', 'Online']
+  // ===== Submit handler =====
+  const handleSubmit = async (e) => {
+    e.preventDefault(); // stop the browser from reloading the page
+    setError("");
+    setLoading(true);
+    try {
+      // Step 1: create the account
+      const res = await fetch(`${API}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(getMessage(data));
+        return;
+      }
 
-// Sample selections so the page looks like the design on first load
-const INITIAL_AVAILABILITY = {
-  'Mon-12 PM': 'preferred',
-  'Mon-8 PM': 'preferred',
-  'Tue-9 AM': 'preferred',
-  'Tue-6 PM': 'preferred',
-  'Wed-3 PM': 'preferred',
-  'Wed-6 PM': 'preferred',
-  'Thu-12 PM': 'preferred',
-  'Thu-8 PM': 'preferred',
-  'Fri-9 AM': 'preferred',
-  'Fri-6 PM': 'preferred',
-}
+      // Step 2: log in right away to get a token (register doesn't return one)
+      const loginRes = await fetch(`${API}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, password: form.password, remember: true }),
+      });
+      if (!loginRes.ok) {
+        navigate("/login"); // account exists, so let them log in manually
+        return;
+      }
 
-export default function Register() {
-  const navigate = useNavigate()
-  const [availability, setAvailability] = useState(INITIAL_AVAILABILITY)
-  const [length, setLength] = useState('60–90 minutes')
-  const [groupSize, setGroupSize] = useState('2–4 students')
-  const [places, setPlaces] = useState(['Library', 'Online'])
+      // Step 3: save the token and continue to onboarding
+      const { access_token } = await loginRes.json();
+      localStorage.setItem("token", access_token);
+      navigate("/onboarding");
+    } catch {
+      // Network failure (backend off, wrong address, etc.)
+      setError("Could not reach the server. Is the backend running?");
+    } finally {
+      setLoading(false); // always re-enable the button
+    }
+  };
 
-  const windowCount = Object.values(availability).filter((v) => v !== 'unavailable').length
-
-  const steps = [
-    { title: 'Account', detail: 'School or personal email' },
-    { title: 'Campus', detail: PROFILE.campus },
-    { title: 'Courses', detail: PROFILE.courses },
-    { title: 'Goals & style', detail: 'Exam prep · collaborative' },
-    { title: 'Availability', detail: `${windowCount} weekly windows` },
-  ]
-
-  const cycleCell = (key) => {
-    setAvailability((prev) => ({ ...prev, [key]: NEXT[prev[key] ?? 'unavailable'] }))
-  }
-
-  const togglePlace = (place) => {
-    setPlaces((prev) => (prev.includes(place) ? prev.filter((p) => p !== place) : [...prev, place]))
-  }
-
-  const handleFinish = () => {
-    // TODO: save { availability, length, groupSize, places } to the API
-    navigate('/matches')
-  }
-
+  // ===== Page layout =====
   return (
     <div className="onb">
       {/* Left: progress sidebar */}
@@ -79,129 +98,100 @@ export default function Register() {
           <h2>Build your study profile</h2>
           <p className="onb-side-sub">A few details help us find classmates who fit your rhythm.</p>
 
+          {/* Step list: steps before the current one show as done */}
           <ol className="steps">
-            {steps.map((step, i) => {
-              const n = i + 1
-              const state = n < CURRENT_STEP ? 'done' : n === CURRENT_STEP ? 'current' : 'todo'
+            {STEPS.map((step, i) => {
+              const n = i + 1;
+              const state = n < CURRENT_STEP ? "done" : n === CURRENT_STEP ? "current" : "todo";
               return (
-                <li key={step.title} className={`step ${state}`} aria-current={state === 'current' ? 'step' : undefined}>
+                <li key={step.title} className={`step ${state}`} aria-current={state === "current" ? "step" : undefined}>
                   <span className="marker" aria-hidden="true">
-                    {state === 'done' ? '✓' : ''}
+                    {state === "done" ? "✓" : ""}
                   </span>
                   <span>
                     <strong>{step.title}</strong>
                     <small>{step.detail}</small>
                   </span>
                 </li>
-              )
+              );
             })}
           </ol>
 
           <p className="privacy">
-            Your availability is shown only as matching windows, never your full calendar.
+            Your email is only used to sign in and to match you with classmates.
           </p>
         </div>
       </aside>
 
-      {/* Right: current step */}
-      <main className="onb-main">
-        <p className="step-label">Step {CURRENT_STEP} of {TOTAL_STEPS}</p>
-        <h1>When do you like to study?</h1>
-        <p className="onb-sub">Choose typical windows. You can fine-tune these anytime.</p>
+      {/* Right: create account form */}
+      <main className="onb-main reg-main">
+        <p className="step-label">Step {CURRENT_STEP} of {STEPS.length}</p>
+        <h1>Create your account</h1>
+        <p className="onb-sub">It only takes a minute. You'll set up your study profile next.</p>
 
-        <div className="summary">
-          <div><small>Campus</small><strong>{PROFILE.campus}</strong></div>
-          <div><small>Courses</small><strong>{PROFILE.courses}</strong></div>
-          <div><small>Semester goals</small><strong>{PROFILE.goals}</strong></div>
-          <div><small>Study style</small><strong>{PROFILE.style}</strong></div>
-        </div>
-
-        <div className="onb-grid">
-          {/* Weekly availability */}
-          <section className="panel">
-            <div className="panel-head">
-              <h2>Weekly availability</h2>
-              <button type="button" className="link-btn" onClick={() => setAvailability({})}>
-                Clear all
-              </button>
+        <section className="panel reg-panel">
+          <form className="reg-form" onSubmit={handleSubmit}>
+            {/* Full name */}
+            <div className="reg-field">
+              <label htmlFor="full_name">Full name</label>
+              <input
+                id="full_name"
+                name="full_name"
+                type="text"
+                className="input"
+                autoComplete="name"
+                value={form.full_name}
+                onChange={handleChange}
+                required
+              />
             </div>
 
-            <div className="legend">
-              <span className="chip preferred">Preferred</span>
-              <span className="chip possible">Possible</span>
-              <span className="chip unavailable">Unavailable</span>
+            {/* Email */}
+            <div className="reg-field">
+              <label htmlFor="email">Email address</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                className="input"
+                autoComplete="email"
+                placeholder="you@university.edu"
+                value={form.email}
+                onChange={handleChange}
+                required
+              />
             </div>
 
-            <div className="avail-grid">
-              {DAYS.map((day) => (
-                <div key={day} className="day-head">{day}</div>
-              ))}
-              {TIMES.map((time) =>
-                DAYS.map((day) => {
-                  const key = `${day}-${time}`
-                  const state = availability[key] ?? 'unavailable'
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      className={`cell ${state}`}
-                      aria-label={`${day} ${time}: ${state}`}
-                      onClick={() => cycleCell(key)}
-                    >
-                      {time}
-                    </button>
-                  )
-                })
-              )}
+            {/* Password */}
+            <div className="reg-field">
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                className="input"
+                autoComplete="new-password"
+                value={form.password}
+                onChange={handleChange}
+                required
+              />
             </div>
-          </section>
 
-          {/* Session preferences */}
-          <aside className="side-col">
-            <section className="panel prefs">
-              <h2>Session preferences</h2>
+            {/* Error message (only shows when there is one) */}
+            {error && <p className="reg-error" role="alert">{error}</p>}
 
-              <label className="pref">
-                <span>Ideal session length</span>
-                <select className="input" value={length} onChange={(e) => setLength(e.target.value)}>
-                  {LENGTHS.map((l) => <option key={l}>{l}</option>)}
-                </select>
-              </label>
-
-              <label className="pref">
-                <span>Group size</span>
-                <select className="input" value={groupSize} onChange={(e) => setGroupSize(e.target.value)}>
-                  {GROUP_SIZES.map((g) => <option key={g}>{g}</option>)}
-                </select>
-              </label>
-
-              <div className="pref">
-                <span>Where?</span>
-                <div className="chips">
-                  {PLACES.map((place) => (
-                    <button
-                      key={place}
-                      type="button"
-                      className={`chip-btn ${places.includes(place) ? 'on' : ''}`}
-                      aria-pressed={places.includes(place)}
-                      onClick={() => togglePlace(place)}
-                    >
-                      {place}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <button type="button" className="btn btn-primary" onClick={handleFinish}>
-              Finish &amp; see my matches
+            {/* Submit button */}
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? "Creating account..." : "Continue"}
             </button>
-            <button type="button" className="btn" onClick={() => navigate(-1)}>
-              Back
-            </button>
-          </aside>
-        </div>
+          </form>
+
+          {/* Link back to login */}
+          <p className="reg-foot">
+            Already have an account? <Link to="/login">Log in</Link>
+          </p>
+        </section>
       </main>
     </div>
-  )
+  );
 }

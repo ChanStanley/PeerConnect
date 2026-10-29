@@ -76,14 +76,14 @@ export default function Login(){
 
                     <form onSubmit = {handleSubmit}>
                         <div className = "field">
-                            <label hmtlfor = "email"> Email address </label>   
+                            <label htmlFor = "email"> Email address </label>   
                             <input
                                 id = "email"
                                 name = "email"
                                 type = "email"
                                 className = "input"
                                 autoComplete = "email"
-                                placeHolder = {emailType === 'school' ? 'you@university.edu' : 'you@gmail.com'}
+                                placeholder = {emailType === 'school' ? 'you@university.edu' : 'you@gmail.com'}
                                 value = {form.email}
                                 onChange = {handleChange}
                                 required
