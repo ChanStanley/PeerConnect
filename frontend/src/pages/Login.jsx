@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { apiFetch, saveToken } from "../api/client.js";
 import Logo from "../components/Logo.jsx";
 import './Login.css'
 
@@ -8,17 +9,32 @@ export default function Login(){
     const navigate = useNavigate()
     const [emailType, setEmailType] = useState('school') // or personal
     const [form, setForm] = useState({ email: '', password: '', remember: true })
+    const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target
         setForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value}))
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault()
-        //
-        //TODO: call the auth API
-        navigate('/matches') //TODO: navigate to the user's dashboard
+
+        setError('')
+        setLoading(true)
+        try {
+            const { access_token } = await apiFetch('/auth/login', {
+                method: 'POST',
+                body: { email: form.email, password: form.password, remember: form.remember },
+            })
+            saveToken(access_token, form.remember)
+            // change to user's dashboard when it is a thing
+            navigate('/matches')
+        } catch (err) {
+            setError(err.message)
+        } finally {
+            setLoading(false)
+        }
     }
 
     const handleGoogle = () => {
@@ -87,7 +103,20 @@ export default function Login(){
                                 value = {form.email}
                                 onChange = {handleChange}
                                 required
-                                />       
+                            />       
+                        </div>
+                        <div className="field">
+                            <label htmlFor="password">Password</label>
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                className="input"
+                                autoComplete="current-password"
+                                value={form.password}
+                                onChange={handleChange}
+                                required
+                            />
                         </div>
 
                     <div className = "row">
@@ -97,8 +126,10 @@ export default function Login(){
                         </label>
                         <Link to = "/login">Forgot password?</Link>
                         </div>
-
-                        <button type = "submit" className = "btn btn-primary">Log in</button>    
+                        {error && <p className="error" role="alert">{error}</p>}
+                        <button type = "submit" className = "btn btn-primary" disabled={loading}>
+                            {loading ? 'Logging in...' : 'Log in'}
+                        </button>    
                     </form>
 
                     <div className = "divider"><span> or </span></div>

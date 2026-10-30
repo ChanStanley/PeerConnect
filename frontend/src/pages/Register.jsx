@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { saveToken } from "../api/client.js";
 import Logo from "../components/Logo.jsx";
 import "../components/flow-layout.css"; // shared sidebar layout
 import "./Register.css";
 
 // Base URL of the FastAPI backend
-const API = "http://127.0.0.1:8000";
+const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // Steps shown in the sidebar (Account is the current one on this page)
 const STEPS = [
@@ -77,7 +78,7 @@ export default function Register()
 
       // Step 3: save the token and continue to onboarding
       const { access_token } = await loginRes.json();
-      localStorage.setItem("token", access_token);
+      saveToken(access_token, true);
       navigate("/onboarding");
     } catch {
       // Network failure (backend off, wrong address, etc.)
