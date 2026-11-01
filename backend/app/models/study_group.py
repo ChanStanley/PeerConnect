@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, text
 
 from app.database import Base
 
@@ -6,7 +6,8 @@ class StudyGroup(Base):
     __tablename__ = "study_groups"
 
     id = Column(Integer, primary_key=True)
-    course = Column(String, ForeignKey("users.course"))
+    course = Column(String, ForeignKey("course.id"))
+    open = Column(Boolean, default=True, server_default=text("true"))
 
 
 

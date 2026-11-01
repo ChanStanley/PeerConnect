@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Index
+from pgvector.sqlalchemy import Vector
 
 from app.database import Base
 
@@ -7,6 +8,15 @@ class Course(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
-    course = Column(String, index=True, nullable=False)
+    embedding = Column(Vector(384), nullable=False)
     description = Column(String, nullable=True)
     searching = Column(Boolean, index=True)
+
+    __table_args__ = (
+        Index(
+            "course_embedding",
+            embedding,
+            postgresql_using="hsnw",
+            postgresql_ops={"embedding": "vector_cosine_ops"}
+        )
+    )
