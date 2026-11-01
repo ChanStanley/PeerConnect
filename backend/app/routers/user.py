@@ -3,8 +3,8 @@ from fastapi import APIRouter
 router = APIRouter(prefix="/user")
  
  
-@router.get("/cards")
-async def get_user_cards():
+@router.get("/courses")
+async def get_user_courses():
     pass
  
  
@@ -13,6 +13,6 @@ async def get_user_groups():
     pass
  
  
-@router.get("/cardset")
-async def get_user_cardset():
+@router.get("/cardsets")
+async def get_user_cardsets():
     pass
