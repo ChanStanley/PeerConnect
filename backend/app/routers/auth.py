@@ -7,6 +7,8 @@ from app.dependencies import get_current_user
 from app.models.user import User
 from app.schemas import LoginRequest, TokenResponse, UserCreate, UserOut
 from app.security import create_access_token, hash_password, verify_password
+from app.models.course import Course
+from app.models.availability_block import AvailabilityBlock
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -40,4 +42,19 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UserOut)
 def me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+@router.post("/complete-onboarding", response_model=UserOut)
+def complete_boarding(current_user: User = Depends(get_current_user),
+                      db: Session = Depends(get_db),):
+    # run a SQLAlchemy query checking whether or not a user has at least 1 course and availability block
+    has_course = db.scalar(select(Course.id).where(Course.user_id == current_user.id).limit(1))
+    has_availability = db.scalar(select(AvailabilityBlock.id).where(AvailabilityBlock.user_id == current_user.id).limit(1))
+
+    if not has_course or not has_availability:
+        raise HTTPException(status_code=400, detail="Add at least one course and one availability window first")
+
+    current_user.onboarding_completed = True
+    db.commit()
+    db.refresh(current_user)
     return current_user

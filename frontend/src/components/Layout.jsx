@@ -27,7 +27,7 @@ export default function Layout({ title, description })
                 <Logo />
                 <nav aria-label = "Main">
                     {NAV.map((item) => (
-                        <NavLink key = {item.to} to ={item.to} className = {({ isActive}) => (isActive ? 'active' : '')}>
+                        <NavLink key = {item.to} to ={item.to} className = {({ isActive }) => (isActive ? 'active' : '')}>
                             {item.label}
                         </NavLink>
                     ))}

@@ -4,6 +4,7 @@ import { saveToken } from "../api/client.js";
 import Logo from "../components/Logo.jsx";
 import "../components/flow-layout.css"; // shared sidebar layout
 import "./Register.css";
+import { clearDraft } from "../utils/onboardingDraft.js";
 
 // Base URL of the FastAPI backend
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -79,6 +80,7 @@ export default function Register()
       // Step 3: save the token and continue to onboarding
       const { access_token } = await loginRes.json();
       saveToken(access_token, true);
+      clearDraft();
       navigate("/onboarding");
     } catch {
       // Network failure (backend off, wrong address, etc.)

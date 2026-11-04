@@ -6,7 +6,7 @@ class StudyGroup(Base):
     __tablename__ = "study_groups"
 
     id = Column(Integer, primary_key=True)
-    course = Column(String, ForeignKey("users.course"))
+    course = Column(String, index=True, nullable=False)
 
 
 

@@ -23,7 +23,7 @@ export async function apiFetch(path, {method = "GET", body, auth = false} = {}){
     
     if (auth){
         const token = getToken();
-        if (token) {headers.Authorization = `Bearer $(token)`};
+        if (token) { headers.Authorization = `Bearer ${token}`; }
     }
 
     const res = await fetch(`${API_URL}${path}`, {
