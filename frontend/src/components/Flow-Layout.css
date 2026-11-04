@@ -47,6 +47,19 @@
   color: rgba(255, 255, 255, 0.65);
 }
 
+/* ==== Message for incomplete Onboarding/Availability ==== */
+.flow-notice {
+  margin: 0 0 16px;
+  max-width: 520px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--primary-line);
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
 /* ===== Main area: heading + panels ===== */
 .onb-main { padding: 28px 32px 40px; max-width: 1080px; width: 100%; }
 .step-label { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--primary); }

@@ -72,6 +72,10 @@
 }
 .chip-btn.on { background: var(--primary-soft); border-color: var(--primary-line); color: var(--primary); font-weight: 600; }
 
+/* ==== Finish button + error message ===== */
+.avail-error { margin: 0; font-size: 12px; color: #b42318; }
+.avail-side .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* ===== Responsive ===== */
 @media (max-width: 960px) {
   .avail-layout { grid-template-columns: 1fr; }
