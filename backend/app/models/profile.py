@@ -5,9 +5,8 @@ from .course import CourseIn
 
 class BlockIn(BaseModel):
     day: int = Field(ge=0, le=6) # 0 = Sunday | ge -> greater or equal to
-    time_start: int = Field(ge=0, lt=1440) # minutes since midnight
-    time_end: int = Field(ge=0, lt=1440)
-    level: Literal["preferred", "possible"] # level of availability
+    preferred: int = Field(ge=0, lt=16777215) # 2^24-1
+    possible: int = Field(ge=0, lt=16777215)
 
     # ensure that users input their time slots correctly
     @model_validator(mode="after")
