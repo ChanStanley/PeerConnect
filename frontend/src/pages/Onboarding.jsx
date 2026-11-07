@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { use, useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import Logo from '../components/Logo.jsx'
 import './Onboarding.css'
+import { loadDraft, saveDraft, nextOnboardingStep } from '../utils/onboardingDraft.js'
 
 // ===== Constants =====
 const TOTAL_STEPS = 5; // Account, Campus, Courses, Goals & style, Availability
@@ -26,16 +27,20 @@ const COPY =
 export default function Onboarding() {
   const navigate = useNavigate();
 
+  // see what notice to display depending on step
+  const notice = useLocation().state?.notice
   // ===== State =====
+  const [draft] = useState(loadDraft)
   // step: which question is showing (2 = Campus, 3 = Courses, 4 = Goals & style)
-  const [step, setStep] = useState(2);
-  const [campus, setCampus] = useState("");
-  const [year, setYear] = useState("");
-  const [major, setMajor] = useState("");
-  const [courses, setCourses] = useState([]);
+  const [step, setStep] = useState(() => Math.min(nextOnboardingStep(draft).step, 4));
+  // if user input doesn't exist yet, keep it blank
+  const [campus, setCampus] = useState(draft.campus ?? "");
+  const [year, setYear] = useState(draft.year ?? "");
+  const [major, setMajor] = useState(draft.major ??"");
+  const [courses, setCourses] = useState(draft.courses ?? []);
   const [courseInput, setCourseInput] = useState("");
-  const [goals, setGoals] = useState([]);
-  const [style, setStyle] = useState([]);
+  const [goals, setGoals] = useState(draft.goals ?? []);
+  const [style, setStyle] = useState(draft.style ?? []);
 
   // ===== Helpers =====
   // Adds a value to a list if it's missing, removes it if it's already there
@@ -67,16 +72,12 @@ export default function Onboarding() {
 
   // ===== Navigation =====
   const handleNext = () => {
+    // save on every step instead of just the last
+    saveDraft({ campus, year, major, courses, goals, style })
     if (step < 4) {
       setStep(step + 1);
       return;
     }
-    // Last question: save answers, then go to the availability page
-    // TODO: save this to the API instead of (or as well as) localStorage
-    localStorage.setItem(
-      "profile",
-      JSON.stringify({ campus, year, major, courses, goals, style })
-    );
     navigate("/availability");
   };
 
@@ -136,6 +137,7 @@ export default function Onboarding() {
 
       {/* Right: current question */}
       <main className="onb-main q-main">
+        {notice && <p className='flow-notice' role="status">{notice}</p>}
         <p className="step-label">Step {step} of {TOTAL_STEPS}</p>
         <h1>{COPY[step].title}</h1>
         <p className="onb-sub">{COPY[step].sub}</p>
@@ -255,7 +257,8 @@ export default function Onboarding() {
 
           {/* ----- Back / Next buttons ----- */}
           <div className="q-actions">
-            <button type="button" className="btn" onClick={handleBack}>Back</button>
+            {/* they don't need to go back after registering (step 1) */}
+            {step > 2 && (<button type="button" className="btn" onClick={handleBack}>Back</button>)}
             <button type="button" className="btn btn-primary" onClick={handleNext} disabled={!canContinue}>
               {step === 4 ? "Continue to availability" : "Next"}
             </button>

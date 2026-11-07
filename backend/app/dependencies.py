@@ -21,3 +21,8 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user
+
+def get_onboarded_user(current_user: User = Depends(get_current_user)) -> User:
+    if not current_user.onboarding_completed:
+        raise HTTPException(status_code=403, detail="Finish setting up your profile first")
+    return current_user

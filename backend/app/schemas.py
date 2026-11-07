@@ -14,6 +14,7 @@ class UserOut(BaseModel):
     id: int
     email: EmailStr
     full_name: str
+    onboarding_completed: bool
     # role: str
 
     model_config = {"from_attributes": True}

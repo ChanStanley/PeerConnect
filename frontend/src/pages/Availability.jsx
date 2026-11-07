@@ -1,9 +1,11 @@
 // ===== Imports =====
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation, Navigate } from 'react-router-dom'
 import Logo from '../components/Logo.jsx'
 import '../components/flow-layout.css' // shared sidebar layout
 import './Availability.css'
+import { apiFetch } from '../api/client.js'
+import { clearDraft, nextOnboardingStep } from '../utils/onboardingDraft.js'
 
 // ===== Constants =====
 const CURRENT_STEP = 5 // Availability is the last step
@@ -32,17 +34,35 @@ function loadProfile() {
     return { campus: 'Completed', courses: 'Completed', style: 'Completed' }
   }
 }
-const PROFILE = loadProfile()
+
+// Turns the cell map (e.g. "Sun-9 AM": "preferred") into rows
+// that the backend can store
+// Each grid cell is one hour starting at 9 AM. Day index follows DAYS (Sun = 0)
+function toBlocks(availability) {
+  return Object.entries(availability)
+    .filter(([, level]) => level !== 'unavailable')
+    .map(([key, level]) => {
+      const [day, time] = key.split('-')
+      const start = (9 + TIMES.indexOf(time)) * 60
+      return { day: DAYS.indexOf(day), time_start: start, time_end: start + 60, level}
+    })
+}
 
 export default function Availability() {
   const navigate = useNavigate()
 
+  const notice = useLocation().state?.notice
   // ===== State =====
+  // computed once on the first render, so clearing the draft after saving doesn't trigger a redirect
+  const [stepsDone] = useState(() => nextOnboardingStep().path === '/availability')
   // availability: map of "Day-Time" -> 'preferred' | 'possible' (missing = unavailable)
   const [availability, setAvailability] = useState({})
   const [length, setLength] = useState('60–90 minutes')
   const [groupSize, setGroupSize] = useState('2–4 students')
   const [places, setPlaces] = useState(['Library', 'Online'])
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [profile] = useState(loadProfile)
 
   // How many time windows are selected (shown in the sidebar)
   const windowCount = Object.values(availability).filter((v) => v !== 'unavailable').length
@@ -51,9 +71,9 @@ export default function Availability() {
   // Steps 1-4 are done by the time the user gets here; Availability is current
   const steps = [
     { title: 'Account', detail: 'Created' },
-    { title: 'Campus', detail: PROFILE.campus },
-    { title: 'Courses', detail: PROFILE.courses },
-    { title: 'Goals & style', detail: PROFILE.style },
+    { title: 'Campus', detail: profile.campus },
+    { title: 'Courses', detail: profile.courses },
+    { title: 'Goals & style', detail: profile.style },
     { title: 'Availability', detail: `${windowCount} weekly windows` },
   ]
 
@@ -69,10 +89,50 @@ export default function Availability() {
   }
 
   // Finish: save availability, then go to matches
-  const handleFinish = () => {
-    // TODO: save { availability, length, groupSize, places } to the API
-    localStorage.setItem('availability', JSON.stringify({ availability, length, groupSize, places }))
-    navigate('/matches')
+  const handleFinish = async () => {
+    const saved = JSON.parse(localStorage.getItem('profile')) || {}
+    if (!saved.campus || !saved.courses?.length) {
+      navigate('/onboarding') // earlier steps were skipped, send them back
+      return
+    }
+    const blocks = toBlocks(availability)
+    if (blocks.length === 0) {
+      setError('Pick at least one time window.')
+      return
+    }
+
+    setError('')
+    setSaving(true)
+    try {
+      await apiFetch('/profile/onboarding', {
+        method: 'PUT',
+        auth: true,
+        body: {
+          ...saved, // campus, courses, goals, style
+          availability: blocks,
+          session_length: length,
+          group_size: groupSize,
+          places,
+        },
+      })
+      clearDraft() // no need for drafts after saving
+      navigate('/matches') // swap to dashboard when it exits
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+
+    // Earlier steps aren't done yet, send user back with message
+    if (!stepsDone) {
+      return (
+        <Navigate
+          to="/onboarding"
+          replace
+          state={{ notice: 'Finish these steps first, then choose your availability.' }}
+        />
+      )
+    }
   }
 
   // ===== Page layout =====
@@ -113,6 +173,7 @@ export default function Availability() {
 
       {/* Right: calendar step */}
       <main className="onb-main">
+        {notice && <p className="flow-notice" role="status">{notice}</p>}
         <p className="step-label">Step {CURRENT_STEP} of {steps.length}</p>
         <h1>When do you like to study?</h1>
         <p className="onb-sub">Choose typical windows. You can fine-tune these anytime.</p>
@@ -200,8 +261,9 @@ export default function Availability() {
             </section>
 
             {/* Finish / Back buttons */}
-            <button type="button" className="btn btn-primary" onClick={handleFinish}>
-              Finish &amp; see my matches
+            {error && <p className="avail-error" role="alert">{error}</p>}
+            <button type="button" className="btn btn-primary" onClick={handleFinish} disabled={saving}>
+              {saving ? 'Saving...' : 'Finish & see my matches'}
             </button>
             <button type="button" className="btn" onClick={() => navigate('/onboarding')}>
               Back

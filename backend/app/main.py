@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import models
 from app.config import settings
 from app.database import Base, engine
-from app.routers import auth
+from app.routers import auth, profile
 
 Base.metadata.create_all(bind=engine)
 
@@ -19,6 +19,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(profile.router)
 
 @app.get("/")
 def check():

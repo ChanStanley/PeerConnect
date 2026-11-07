@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Index
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, UniqueConstraint, Index
 from pgvector.sqlalchemy import Vector
 
 from app.database import Base
@@ -18,5 +18,6 @@ class Course(Base):
             embedding,
             postgresql_using="hsnw",
             postgresql_ops={"embedding": "vector_cosine_ops"}
-        )
+        ),
+        UniqueConstraint("user_id", "course")
     )
