@@ -9,8 +9,8 @@ class Course(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
     embedding = Column(Vector(384), nullable=False)
-    description = Column(String, nullable=True)
-    searching = Column(Boolean, index=True)
+    name = Column(String, nullable=True)
+    searching = Column(Boolean, index=True, default=True)
 
     __table_args__ = (
         Index(

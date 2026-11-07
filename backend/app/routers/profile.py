@@ -11,6 +11,7 @@ from app.models.user import User
 from app.models.availability_block import AvailabilityBlock
 from app.models.course import Course
 from app.models.profile import Profile
+from app.repositories.courseRepo import CourseRepository
 from app.schemas import UserOut
 
 router = APIRouter(prefix="/profile", tags=["profile"])
@@ -47,18 +48,17 @@ def save_onboarding(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # CSCI 135 and csci 135 should count as same course
-    codes = {"".join(c.upper().split()) for c in data.courses}
-    codes.discard("")
-    if not codes:
+    courseRepo = CourseRepository(db)
+
+    if not data.courses:
         raise HTTPException(status_code=422, detail="Add at least one course")
 
     # PUT replaces earlier answers, submitting twice is safe
     db.execute(delete(Course).where(Course.user_id == current_user.id))
     db.execute(delete(AvailabilityBlock).where(AvailabilityBlock.user_id == current_user.id))
 
-    for code in sorted(codes):
-        db.add(Course(user_id=current_user.id, course=code, searching=True))
+    for course in data.courses:
+        courseRepo.create(course, current_user)
     for b in data.availability:
         db.add(AvailabilityBlock(
             user_id=current_user.id,

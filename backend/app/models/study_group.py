@@ -19,6 +19,14 @@ class StudyGroupMember(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
 
+class StudyGroupRequest(Base):
+    __tablename__ = "study_group_request"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    reciever_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+
 class StudySession(Base):
     __tablename__ = "study_sessions"
 
