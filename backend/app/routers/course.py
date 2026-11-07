@@ -36,6 +36,6 @@ async def create_course(
     db: Session = Depends(get_db)
 ):
     courseRepo = CourseRepository(db)
-    courseRepo.create(course=CourseIn, user=current_user)
+    courseRepo.create(course.name, course.description, current_user)
 
     return {"message": "Post created"}

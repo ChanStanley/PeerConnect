@@ -1,6 +1,8 @@
 from typing import Literal
 from pydantic import BaseModel, Field, model_validator
 
+from .course import CourseIn
+
 class BlockIn(BaseModel):
     day: int = Field(ge=0, le=6) # 0 = Sunday | ge -> greater or equal to
     time_start: int = Field(ge=0, lt=1440) # minutes since midnight
@@ -18,7 +20,7 @@ class OnboardingIn(BaseModel):
     campus: str = Field(min_length=1)
     year: str = ""
     major: str = ""
-    courses: list[str] = Field(min_length=1, max_length=30)
+    courses: list[CourseIn] = Field(min_length=1, max_length=30)
     goals: list[str] = []
     style: list[str] = []
     availability: list[BlockIn] = Field(min_length=1, max_length=91)

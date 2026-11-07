@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, text
+import enum
+
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, text, Enum
 
 from app.database import Base
 
@@ -19,12 +21,17 @@ class StudyGroupMember(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
 
+class RequestType(enum.Enum):
+    JOIN = "join"
+    INVITE = "invite"
+
 class StudyGroupRequest(Base):
-    __tablename__ = "study_group_request"
+    __tablename__ = "study_group_requests"
 
     id = Column(Integer, primary_key=True)
+    group_id = Column(Integer, ForeignKey("study_groups.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    reciever_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    request_type = Column(Enum(RequestType), nullable=False)
 
 
 class StudySession(Base):

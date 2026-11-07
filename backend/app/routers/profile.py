@@ -31,7 +31,7 @@ def save_onboarding(
     db.execute(delete(AvailabilityBlock).where(AvailabilityBlock.user_id == current_user.id))
 
     for course in data.courses:
-        courseRepo.create(course, current_user)
+        courseRepo.create(course.name, course.description, current_user)
     for b in data.availability:
         db.add(AvailabilityBlock(
             user_id=current_user.id,
