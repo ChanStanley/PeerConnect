@@ -1,23 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, UniqueConstraint, Index
-from pgvector.sqlalchemy import Vector
+from pydantic import BaseModel, Field
 
-from app.database import Base
+class CourseIn(BaseModel):
+    name: str = Field(min_length=1, max_length=30)
 
-class Course(Base):
-    __tablename__ = "courses"
-
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
-    embedding = Column(Vector(384), nullable=False)
-    name = Column(String, nullable=True)
-    searching = Column(Boolean, index=True, default=True)
-
-    __table_args__ = (
-        Index(
-            "course_embedding",
-            embedding,
-            postgresql_using="hsnw",
-            postgresql_ops={"embedding": "vector_cosine_ops"}
-        ),
-        UniqueConstraint("user_id", "course")
-    )
+class CourseMatchOut(BaseModel):
+    pass

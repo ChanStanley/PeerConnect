@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.repositories.courseRepo import CourseRepository
-from app.schemas.course import CourseIn
+from app.models.course import CourseIn
  
 router = APIRouter(prefix="/courses")
  

@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.embedding_model import generate_embeddings
-from app.models.course import Course
+from app.schemas.course import Course
 
 class CourseRepository:
     def __init__(self, db: Session):
