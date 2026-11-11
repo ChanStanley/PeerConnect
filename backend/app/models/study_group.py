@@ -9,11 +9,11 @@ class StudyGroup(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, default="group")
-    course_id = Column(String, ForeignKey("course.id"))
+    course_id = Column(Integer, ForeignKey("courses.id"))
     open = Column(Boolean, default=True, server_default=text("true"))
 
     __table_args__ = (
-        UniqueConstraint("id", "course_id", name="unique_group_course")
+        UniqueConstraint("id", "course_id", name="unique_group_course"),
     )
 
 

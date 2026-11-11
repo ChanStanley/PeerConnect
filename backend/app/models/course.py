@@ -21,8 +21,9 @@ class Course(Base):
         Index(
             "course_embedding",
             embedding,
-            postgresql_using="hsnw",
+            postgresql_using="hnsw",
             postgresql_ops={"embedding": "vector_cosine_ops"}
         ),
-        UniqueConstraint("user_id", "course")
+        UniqueConstraint("user_id", "name"),
+        UniqueConstraint("user_id", "description"),
     )

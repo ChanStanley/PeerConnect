@@ -10,7 +10,7 @@ from app.models.course import Course
 from app.models.profile import Profile
 from app.schemas.profile import BlockIn, OnboardingIn
 from app.repositories.courseRepo import CourseRepository
-from app.schemas import UserOut
+from app.schemas.auth import UserOut
 
 router = APIRouter(prefix="/profile", tags=["profile"])
 
