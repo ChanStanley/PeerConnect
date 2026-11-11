@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, text, Enum
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, text, Enum, UniqueConstraint
 
 from app.database import Base
 
@@ -8,9 +8,13 @@ class StudyGroup(Base):
     __tablename__ = "study_groups"
 
     id = Column(Integer, primary_key=True)
-    course = Column(String, ForeignKey("course.id"))
+    name = Column(String, default="group")
+    course_id = Column(String, ForeignKey("course.id"))
     open = Column(Boolean, default=True, server_default=text("true"))
 
+    __table_args__ = (
+        UniqueConstraint("id", "course_id", name="unique_group_course")
+    )
 
 
 class StudyGroupMember(Base):

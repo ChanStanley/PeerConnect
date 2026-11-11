@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
-from app.models.profile import BlockIn
-from app.schemas.availability_block import AvailabilityBlock
+from app.schemas.profile import BlockIn
+from app.models.availability_block import AvailabilityBlock
 
 class availabilityRepository:
     def __init__(self, db: Session):

@@ -4,13 +4,13 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_current_user
-from app.schemas.user import User
-from app.schemas.availability_block import AvailabilityBlock
-from app.schemas.course import Course
-from app.schemas.profile import Profile
-from app.models.profile import BlockIn, OnboardingIn
+from app.models.user import User
+from app.models.availability_block import AvailabilityBlock
+from app.models.course import Course
+from app.models.profile import Profile
+from app.schemas.profile import BlockIn, OnboardingIn
 from app.repositories.courseRepo import CourseRepository
-from app.models import UserOut
+from app.schemas import UserOut
 
 router = APIRouter(prefix="/profile", tags=["profile"])
 
@@ -55,3 +55,4 @@ def save_onboarding(
     db.commit()
     db.refresh(current_user)
     return current_user
+
