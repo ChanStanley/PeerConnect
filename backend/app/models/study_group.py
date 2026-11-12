@@ -1,6 +1,7 @@
 import enum
 
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, text, Enum, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, text, Enum, UniqueConstraint, CheckConstraint
+from sqlalchemy.orm import relationship
 
 from app.database import Base
 
@@ -12,8 +13,10 @@ class StudyGroup(Base):
     course_id = Column(Integer, ForeignKey("courses.id"))
     open = Column(Boolean, default=True, server_default=text("true"))
 
+    availability_blocks = relationship("AvailabilityBlock", uselist=True)
+
     __table_args__ = (
-        UniqueConstraint("id", "course_id", name="unique_group_course"),
+        UniqueConstraint("course_id", name="unique_course_group"),
     )
 
 
@@ -33,9 +36,16 @@ class StudyGroupRequest(Base):
     __tablename__ = "study_group_requests"
 
     id = Column(Integer, primary_key=True)
-    group_id = Column(Integer, ForeignKey("study_groups.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    group_id = Column(Integer, ForeignKey("study_groups.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     request_type = Column(Enum(RequestType), nullable=False)
+
+    __table_args__ = (
+            CheckConstraint(
+                "user_id IS NOT NULL OR group_id IS NOT NULL",
+                name="require_request_reciever_id"
+            )
+        )
 
 
 class StudySession(Base):

@@ -9,6 +9,8 @@ class CourseUserMatchOut(BaseModel):
     description: str
     username: str
     user_id: int
+    preferred_match: bool
+    possible_match: bool
 
 
 class CourseGroupMatchOut(BaseModel):
@@ -16,3 +18,5 @@ class CourseGroupMatchOut(BaseModel):
     description: str
     group_name: str
     group_id: int
+    preferred_match: bool
+    possible_match: bool
