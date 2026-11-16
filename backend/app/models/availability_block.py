@@ -18,5 +18,5 @@ class AvailabilityBlock(Base):
         CheckConstraint(
             "user_id IS NOT NULL OR study_group_id IS NOT NULL",
             name="require_block_owner_id"
-        )
+        ),
     )

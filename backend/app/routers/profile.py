@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
@@ -56,3 +56,19 @@ def save_onboarding(
     db.refresh(current_user)
     return current_user
 
+
+@router.post("/availability_block", status_code=status.HTTP_201_CREATED)
+def create_availability_block(
+    block: BlockIn,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    db.add(AvailabilityBlock(
+        user_id=current_user.id,
+        day=block.day,
+        preferred=block.preferred,
+        possible=block.possible,
+    ))
+    db.commit()
+
+    return  {"message": "availability block created"}

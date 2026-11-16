@@ -44,7 +44,7 @@ class StudyGroupRequest(Base):
             CheckConstraint(
                 "user_id IS NOT NULL OR group_id IS NOT NULL",
                 name="require_request_reciever_id"
-            )
+            ),
         )
 
 
