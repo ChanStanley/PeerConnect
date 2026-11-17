@@ -1,5 +1,5 @@
-import { use, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useState } from 'react'
+import { useNavigate, useLocation, useOutletContext } from 'react-router-dom'
 import Logo from '../components/Logo.jsx'
 import './Onboarding.css'
 import { loadDraft, saveDraft, nextOnboardingStep } from '../utils/onboardingDraft.js'
@@ -26,11 +26,11 @@ const COPY =
 
 export default function Onboarding() {
   const navigate = useNavigate();
-
-  // see what notice to display depending on step
-  const notice = useLocation().state?.notice
+  const { user } = useOutletContext();
+  const location = useLocation();
   // ===== State =====
-  const [draft] = useState(loadDraft)
+  const [notice, setNotice] = useState(location.state?.notice ?? '');
+  const [draft] = useState(() => loadDraft(user.id));
   // step: which question is showing (2 = Campus, 3 = Courses, 4 = Goals & style)
   const [step, setStep] = useState(() => Math.min(nextOnboardingStep(draft).step, 4));
   // if user input doesn't exist yet, keep it blank
@@ -73,7 +73,8 @@ export default function Onboarding() {
   // ===== Navigation =====
   const handleNext = () => {
     // save on every step instead of just the last
-    saveDraft({ campus, year, major, courses, goals, style })
+    saveDraft(user.id, { campus, year, major, courses, goals, style });
+    setNotice('');
     if (step < 4) {
       setStep(step + 1);
       return;
@@ -82,8 +83,8 @@ export default function Onboarding() {
   };
 
   const handleBack = () => {
+    setNotice('');
     if (step > 2) setStep(step - 1);
-    else navigate("/register");
   };
 
   // ===== Sidebar steps =====

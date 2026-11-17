@@ -33,8 +33,8 @@ class OnboardingIn(BaseModel):
     year: str = ""
     major: str = ""
     courses: list[str] = Field(min_length=1, max_length=30)
-    goals: list[str] = []
-    style: list[str] = []
+    goals: list[str] = Field(min_length=1)
+    style: list[str] = Field(min_length=1)
     availability: list[BlockIn] = Field(min_length=1, max_length=91)
     session_length: str = ""
     group_size: str = ""
