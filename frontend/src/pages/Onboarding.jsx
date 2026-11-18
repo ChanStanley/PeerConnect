@@ -50,7 +50,7 @@ export default function Onboarding() {
 
   // Adds the typed course (like "CSCI 135") to the list, skipping blanks and duplicates
   const addCourse = () => {
-    const value = courseInput.trim().toUpperCase();
+    const value = courseInput.trim().toUpperCase().slice(0, 30);
     if (value && !courses.includes(value)) setCourses([...courses, value]);
     setCourseInput("");
   };
@@ -193,6 +193,7 @@ export default function Onboarding() {
                       value={courseInput}
                       onChange={(e) => setCourseInput(e.target.value)}
                       onKeyDown={handleCourseKey}
+                      maxLength={30}
                     />
                     <button type="button" className="btn" onClick={addCourse}>Add</button>
                   </div>

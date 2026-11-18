@@ -1,13 +1,29 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, UniqueConstraint, Index
+from sqlalchemy.orm import relationship
+from pgvector.sqlalchemy import Vector
 
 from app.database import Base
 
 class Course(Base):
     __tablename__ = "courses"
-    __table_args__ = (UniqueConstraint("user_id", "course"),)
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
-    course = Column(String, index=True, nullable=False)
+    embedding = Column(Vector(384), nullable=False)
+    name = Column(String, nullable=True)
     description = Column(String, nullable=True)
-    searching = Column(Boolean, index=True)
+    searching = Column(Boolean, index=True, default=True)
+
+    user = relationship("User")
+    study_group = relationship("StudyGroup")
+
+    __table_args__ = (
+        Index(
+            "course_embedding",
+            embedding,
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"}
+        ),
+        UniqueConstraint("user_id", "name"),
+        UniqueConstraint("user_id", "description"),
+    )

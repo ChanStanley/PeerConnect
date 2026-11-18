@@ -25,22 +25,24 @@ const PLACES = ['Library', 'Online']
 function summarize(saved) {
   return {
     campus: saved.campus ?? '',
-    courses: saved.courses.join (' - ') ?? '',
-    style: saved.style.join(' - ') ?? '',
+    courses: saved.courses?.join (' - ') ?? '',
+    style: saved.style?.join(' - ') ?? '',
   }
 }
 
-// Turns the cell map (e.g. "Sun-9 AM": "preferred") into rows
-// that the backend can store
-// Each grid cell is one hour starting at 9 AM. Day index follows DAYS (Sun = 0)
+// Turns the cell map (e.g. "Sun-9 AM": "preferred") into one row per day.
+// 'preferred' and 'possible' are bitmasks: bit h is set when hour h (0-23, 24-hour clock) is picked.
 function toBlocks(availability) {
-  return Object.entries(availability)
-    .filter(([, level]) => level !== 'unavailable')
-    .map(([key, level]) => {
-      const [day, time] = key.split('-')
-      const start = (9 + TIMES.indexOf(time)) * 60
-      return { day: DAYS.indexOf(day), time_start: start, time_end: start + 60, level}
-    })
+  const byDay = {}
+  for (const [key, level] of Object.entries(availability)) {
+    if (level === 'unavailable') continue
+    const [day, time] = key.split('-')
+    const d = DAYS.indexOf(day)
+    const hour = 9 + TIMES.indexOf(time) // grid starts at 9 AM
+    byDay[d] ??= { day: d, preferred: 0, possible: 0 } // default
+    byDay[d][level] |= 1 << hour // bitmask to store t/f flags
+  }
+  return Object.values(byDay)
 }
 
 export default function Availability() {
@@ -100,6 +102,7 @@ export default function Availability() {
         auth: true,
         body: {
           ...saved, // campus, year, major, courses, goals, style
+          courses: saved.courses.map((name) => ({ name, description: '' })),
           availability: blocks,
           session_length: length,
           group_size: groupSize,
