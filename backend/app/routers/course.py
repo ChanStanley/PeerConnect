@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy import select
-from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 from app.database import get_db
@@ -29,25 +30,25 @@ async def update_course(id: int):
 async def match_users(
     id: int,
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     courseRepo = CourseRepository(db)
 
     # get course
-    course = db.get(Course, id)
+    course = await db.get(Course, id)
     if course is None:
         raise HTTPException(status_code=404, detail="Course does not exist")
 
     # find similar courses, have it eager load course.user and user.availability_blocks
-    courses = courses = db.execute(select(Course)
+    courses = (await db.execute(select(Course)
         .options(joinedload(Course.user).selectinload(User.availability_blocks))
         .where(Course.user_id != current_user)
         .where(Course.searching == True)
         .where(Course.embedding.cosine_distance(course.embedding) < 0.1)
-    ).scalars().all()
+    )).scalars().all()
 
     # get when user is available
-    block_hash = courseRepo.get_availability(current_user)
+    block_hash = await courseRepo.get_availability(current_user)
 
     # create CourseUserMatchOut for each matching course found
     response = []
@@ -80,25 +81,25 @@ async def match_users(
 async def match_groups(
     id: int,
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     courseRepo = CourseRepository(db)
     
-    course = db.get(Course, id)
+    course = await db.get(Course, id)
     if course is None:
             raise HTTPException(status_code=404, detail="Course does not exist")
     
-    result = db.execute(
+    result = (await db.execute(
         select(Course, StudyGroup)
             .join(StudyGroup, StudyGroup.course_id == Course.id)
             .options(selectinload(StudyGroup.availability_blocks))
             .where(Course.user_id != current_user)
             .where(StudyGroup.open == True)
             .where(Course.embedding.cosine_distance(course.embedding) < 0.1)
-    ).all()
+    )).all()
 
     # get when user is available
-    block_hash = courseRepo.get_availability(current_user)
+    block_hash = await courseRepo.get_availability(current_user)
 
     response = []
     for course, study_group in result:
@@ -129,10 +130,10 @@ async def match_groups(
 async def create_course(
     course: CourseIn,
     current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     courseRepo = CourseRepository(db)
     courseRepo.create(course, current_user)
-    db.commit()
+    await db.commit()
 
     return {"message": "Post created"}
