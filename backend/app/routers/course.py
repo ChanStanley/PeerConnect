@@ -29,7 +29,7 @@ async def update_course(id: int):
 @router.get("/{id}/match-users", response_model=list[CourseUserMatchOut])
 async def match_users(
     id: int,
-    current_user = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     courseRepo = CourseRepository(db)
@@ -42,13 +42,13 @@ async def match_users(
     # find similar courses, have it eager load course.user and user.availability_blocks
     courses = (await db.execute(select(Course)
         .options(joinedload(Course.user).selectinload(User.availability_blocks))
-        .where(Course.user_id != current_user)
+        .where(Course.user_id != current_user.id)
         .where(Course.searching == True)
         .where(Course.embedding.cosine_distance(course.embedding) < 0.1)
     )).scalars().all()
 
     # get when user is available
-    block_hash = await courseRepo.get_availability(current_user)
+    block_hash = await courseRepo.get_availability(current_user.id)
 
     # create CourseUserMatchOut for each matching course found
     response = []
@@ -80,7 +80,7 @@ async def match_users(
 @router.get("/{id}/match-groups", response_model=list[CourseGroupMatchOut])
 async def match_groups(
     id: int,
-    current_user = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     courseRepo = CourseRepository(db)
@@ -93,13 +93,13 @@ async def match_groups(
         select(Course, StudyGroup)
             .join(StudyGroup, StudyGroup.course_id == Course.id)
             .options(selectinload(StudyGroup.availability_blocks))
-            .where(Course.user_id != current_user)
+            .where(Course.user_id != current_user.id)
             .where(StudyGroup.open == True)
             .where(Course.embedding.cosine_distance(course.embedding) < 0.1)
     )).all()
 
     # get when user is available
-    block_hash = await courseRepo.get_availability(current_user)
+    block_hash = await courseRepo.get_availability(current_user.id)
 
     response = []
     for course, study_group in result:
@@ -129,11 +129,11 @@ async def match_groups(
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_course(
     course: CourseIn,
-    current_user = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     courseRepo = CourseRepository(db)
-    courseRepo.create(course, current_user)
+    courseRepo.create(course, current_user.id)
     await db.commit()
 
     return {"message": "Post created"}

@@ -32,7 +32,7 @@ def save_onboarding(
     db.execute(delete(AvailabilityBlock).where(AvailabilityBlock.user_id == current_user.id))
 
     for course in data.courses:
-        courseRepo.create(course, current_user)
+        courseRepo.create(course, current_user.id)
     for b in data.availability:
         db.add(AvailabilityBlock(
             user_id=current_user.id,
@@ -61,7 +61,7 @@ def save_onboarding(
 @router.post("/availability_block", status_code=status.HTTP_201_CREATED)
 async def create_availability_block(
     block: BlockIn,
-    current_user = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     db.add(AvailabilityBlock(
