@@ -1,27 +1,26 @@
-const keyFor = (userId) => `onboarding_draft:${userId}`
+const KEY = 'profile'
 
-export function loadDraft(userId) {
+export function loadDraft() {
     try {
-        return JSON.parse(localStorage.getItem(keyFor(userId))) || {}
+        return JSON.parse(localStorage.getItem(KEY)) || {}
     } catch {
         return {}
     }
 }
 
-export function saveDraft(userId, draft) {
-    localStorage.setItem(keyFor(userId), JSON.stringify(draft))
+export function saveDraft(draft) {
+    localStorage.setItem(KEY, JSON.stringify(draft))
 }
 
-export function clearDraft(userId) {
-    localStorage.removeItem(keyFor(userId))
+export function clearDraft() {
+    localStorage.removeItem(KEY)
 }
 
 // Where should we send an unfinished user? Depends on what step they were on
 // 2-4 are the Onboarding questions and 5 means they are done and have to do Availability
-// the notice wasn't working properly cause I forgot 'label'
-export function nextOnboardingStep(draft) {
-    if (!draft.campus?.trim()) return { path: '/onboarding', step: 2, label: 'your campus' }
-    if (!draft.courses?.length) return { path: '/onboarding', step: 3, label: 'your courses' }
-    if (!draft.goals?.length || !draft.style?.length) return { path: '/onboarding', step: 4, label: 'your goals and study style' }
-    return { path: '/availability', step: 5, label: 'your availability' }
+export function nextOnboardingStep(draft = loadDraft()) {
+    if (!draft.campus?.trim()) return { path: '/onboarding', step: 2 }
+    if (!draft.courses?.length) return { path: '/onboarding', step: 3 }
+    if (!draft.goals?.length || !draft.style?.length) return { path: '/onboarding', step: 4 }
+    return { path: '/onboarding', step: 5 }
 }
