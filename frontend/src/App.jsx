@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import RequireOnboarding from "./components/RequireOnboarding.jsx";
+import PublicOnly from "./components/PublicOnly.jsx";
+import OnboardingOnly from "./components/OnboardingOnly.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Onboarding from "./pages/Onboarding.jsx";
@@ -16,17 +18,22 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
-
-      {/* Public */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
       {/* idk if this should be public */}
       <Route path="/status" element={<Status />} />
 
+      {/* Public (logged out only) */}
+      <Route element={<PublicOnly/>}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Route>
+
       {/* Require logged in user (registered counts too) */}
       <Route element={<ProtectedRoute/>}>
-        <Route path="/onboarding" element={<Onboarding />} />
-        <Route path="/availability" element={<Availability />} />
+        {/* Logged in but onboarding NOT finished */}
+        <Route element={<OnboardingOnly />}>
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/availability" element={<Availability />} />
+        </Route>
         
         {/* Logged in AND onboarding is finished */}
         <Route element={<RequireOnboarding/>}>

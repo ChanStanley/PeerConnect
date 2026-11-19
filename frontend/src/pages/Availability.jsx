@@ -1,11 +1,11 @@
 // ===== Imports =====
 import { useState } from 'react'
-import { useNavigate, useLocation, Navigate } from 'react-router-dom'
+import { useNavigate, useLocation, Navigate, useOutletContext } from 'react-router-dom'
 import Logo from '../components/Logo.jsx'
 import '../components/flow-layout.css' // shared sidebar layout
 import './Availability.css'
 import { apiFetch } from '../api/client.js'
-import { clearDraft, nextOnboardingStep } from '../utils/onboardingDraft.js'
+import { clearDraft, loadDraft, nextOnboardingStep } from '../utils/onboardingDraft.js'
 
 // ===== Constants =====
 const CURRENT_STEP = 5 // Availability is the last step
@@ -20,41 +20,38 @@ const GROUP_SIZES = ['2–3 students', '2–4 students', '4–6 students']
 const PLACES = ['Library', 'Online']
 
 // ===== Helpers =====
-// Reads the answers saved earlier (if any) so the sidebar can show them.
-// Falls back to short placeholder text if nothing was saved.
-function loadProfile() {
-  try {
-    const saved = JSON.parse(localStorage.getItem('profile')) || {}
-    return {
-      campus: saved.campus || 'Completed',
-      courses: Array.isArray(saved.courses) && saved.courses.length ? saved.courses.join(' - ') : 'Completed',
-      style: Array.isArray(saved.style) && saved.style.length ? saved.style.join(' - ') : 'Completed',
-    }
-  } catch {
-    return { campus: 'Completed', courses: 'Completed', style: 'Completed' }
+// Shows answers saved on the sidebar (summary).
+// If nothing is saved, it will be blank. Probably won't be shown anyways since there are new guards in place
+function summarize(saved) {
+  return {
+    campus: saved.campus ?? '',
+    courses: saved.courses?.join (' - ') ?? '',
+    style: saved.style?.join(' - ') ?? '',
   }
 }
 
-// Turns the cell map (e.g. "Sun-9 AM": "preferred") into rows
-// that the backend can store
-// Each grid cell is one hour starting at 9 AM. Day index follows DAYS (Sun = 0)
+// Turns the cell map (e.g. "Sun-9 AM": "preferred") into one row per day.
+// 'preferred' and 'possible' are bitmasks: bit h is set when hour h (0-23, 24-hour clock) is picked.
 function toBlocks(availability) {
-  return Object.entries(availability)
-    .filter(([, level]) => level !== 'unavailable')
-    .map(([key, level]) => {
-      const [day, time] = key.split('-')
-      const start = (9 + TIMES.indexOf(time)) * 60
-      return { day: DAYS.indexOf(day), time_start: start, time_end: start + 60, level}
-    })
+  const byDay = {}
+  for (const [key, level] of Object.entries(availability)) {
+    if (level === 'unavailable') continue
+    const [day, time] = key.split('-')
+    const d = DAYS.indexOf(day)
+    const hour = 9 + TIMES.indexOf(time) // grid starts at 9 AM
+    byDay[d] ??= { day: d, preferred: 0, possible: 0 } // default
+    byDay[d][level] |= 1 << hour // bitmask to store t/f flags
+  }
+  return Object.values(byDay)
 }
 
 export default function Availability() {
   const navigate = useNavigate()
-
+  const { user } = useOutletContext()
   const notice = useLocation().state?.notice
   // ===== State =====
   // computed once on the first render, so clearing the draft after saving doesn't trigger a redirect
-  const [stepsDone] = useState(() => nextOnboardingStep().path === '/availability')
+  const [saved] = useState(() => loadDraft(user.id))
   // availability: map of "Day-Time" -> 'preferred' | 'possible' (missing = unavailable)
   const [availability, setAvailability] = useState({})
   const [length, setLength] = useState('60–90 minutes')
@@ -62,7 +59,8 @@ export default function Availability() {
   const [places, setPlaces] = useState(['Library', 'Online'])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [profile] = useState(loadProfile)
+  const next = nextOnboardingStep(saved)
+  const profile = summarize(saved)
 
   // How many time windows are selected (shown in the sidebar)
   const windowCount = Object.values(availability).filter((v) => v !== 'unavailable').length
@@ -90,11 +88,6 @@ export default function Availability() {
 
   // Finish: save availability, then go to matches
   const handleFinish = async () => {
-    const saved = JSON.parse(localStorage.getItem('profile')) || {}
-    if (!saved.campus || !saved.courses?.length) {
-      navigate('/onboarding') // earlier steps were skipped, send them back
-      return
-    }
     const blocks = toBlocks(availability)
     if (blocks.length === 0) {
       setError('Pick at least one time window.')
@@ -108,14 +101,15 @@ export default function Availability() {
         method: 'PUT',
         auth: true,
         body: {
-          ...saved, // campus, courses, goals, style
+          ...saved, // campus, year, major, courses, goals, style
+          courses: saved.courses.map((name) => ({ name, description: '' })),
           availability: blocks,
           session_length: length,
           group_size: groupSize,
           places,
         },
       })
-      clearDraft() // no need for drafts after saving
+      clearDraft(user.id) // no need for drafts after saving
       navigate('/matches') // swap to dashboard when it exits
     } catch (err) {
       setError(err.message)
@@ -123,16 +117,18 @@ export default function Availability() {
       setSaving(false)
     }
 
-    // Earlier steps aren't done yet, send user back with message
-    if (!stepsDone) {
-      return (
-        <Navigate
-          to="/onboarding"
-          replace
-          state={{ notice: 'Finish these steps first, then choose your availability.' }}
-        />
-      )
-    }
+    
+  }
+
+  // Earlier steps aren't done yet, send user back with message
+  if (next.path !== '/availability') {
+    return (
+      <Navigate
+        to="/onboarding"
+        replace
+        state={{ notice: `Add ${next.label} before choosing your availability.` }}
+      />
+    )
   }
 
   // ===== Page layout =====
