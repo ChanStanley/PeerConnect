@@ -1,14 +1,19 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import models
 from app.config import settings
-from app.database import Base, engine
+from app.database import Base, engine, init_db
 from app.routers import auth, profile, course
 
-Base.metadata.create_all(bind=engine)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db()
+    yield
+    await engine.dispose()
 
-app = FastAPI(title="PeerConnect API")
+app = FastAPI(lifespan=lifespan, title="PeerConnect API")
 
 app.add_middleware(
     CORSMiddleware,
