@@ -23,7 +23,7 @@ async def register(data: UserCreate, db: AsyncSession = Depends(get_db)):
 
     user = User(
         email=email,
-        hashed_password=hash_password(data.password),
+        hashed_password=await hash_password(data.password),
         full_name=data.full_name
     )
     db.add(user)
@@ -34,7 +34,7 @@ async def register(data: UserCreate, db: AsyncSession = Depends(get_db)):
 @router.post("/login", response_model=TokenResponse)
 async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
     user = await db.scalar(select(User).where(User.email == data.email.lower()))
-    if user is None or not verify_password(data.password, user.hashed_password):
+    if user is None or not await verify_password(data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
 
     minutes = REMEMBER_ME_MINUTES if data.remember else None
