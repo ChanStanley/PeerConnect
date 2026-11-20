@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete
-from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -17,10 +16,10 @@ router = APIRouter(prefix="/profile", tags=["profile"])
 
 
 @router.put("/onboarding", response_model=UserOut)
-def save_onboarding(
+async def save_onboarding(
     data: OnboardingIn,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     courseRepo = CourseRepository(db)
 
@@ -28,8 +27,8 @@ def save_onboarding(
         raise HTTPException(status_code=422, detail="Add at least one course")
 
     # PUT replaces earlier answers, submitting twice is safe
-    db.execute(delete(Course).where(Course.user_id == current_user.id))
-    db.execute(delete(AvailabilityBlock).where(AvailabilityBlock.user_id == current_user.id))
+    await db.execute(delete(Course).where(Course.user_id == current_user.id))
+    await db.execute(delete(AvailabilityBlock).where(AvailabilityBlock.user_id == current_user.id))
 
     for course in data.courses:
         courseRepo.create(course, current_user.id)
@@ -41,7 +40,7 @@ def save_onboarding(
             possible=b.possible,
         ))
 
-    profile = db.get(Profile, current_user.id) or Profile(user_id=current_user.id)
+    profile = await db.get(Profile, current_user.id) or Profile(user_id=current_user.id)
     profile.campus = data.campus.strip()
     profile.year = data.year
     profile.major = data.major.strip()
@@ -53,8 +52,8 @@ def save_onboarding(
     db.add(profile)
 
     current_user.onboarding_completed = True
-    db.commit()
-    db.refresh(current_user)
+    await db.commit()
+    await db.refresh(current_user)
     return current_user
 
 
@@ -62,7 +61,7 @@ def save_onboarding(
 async def create_availability_block(
     block: BlockIn,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     db.add(AvailabilityBlock(
         user_id=current_user.id,
@@ -70,6 +69,6 @@ async def create_availability_block(
         preferred=block.preferred,
         possible=block.possible,
     ))
-    db.commit()
+    await db.commit()
 
     return  {"message": "availability block created"}
