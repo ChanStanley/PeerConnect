@@ -133,7 +133,7 @@ async def create_course(
     db: AsyncSession = Depends(get_db)
 ):
     courseRepo = CourseRepository(db)
-    courseRepo.create(course, current_user.id)
+    await courseRepo.create(course, current_user.id)
     await db.commit()
 
     return {"message": "Post created"}

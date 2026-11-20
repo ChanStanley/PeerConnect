@@ -30,8 +30,8 @@ async def save_onboarding(
     await db.execute(delete(Course).where(Course.user_id == current_user.id))
     await db.execute(delete(AvailabilityBlock).where(AvailabilityBlock.user_id == current_user.id))
 
-    for course in data.courses:
-        courseRepo.create(course, current_user.id)
+    await courseRepo.insert_list(courses=data.courses, user_id=current_user.id)
+    
     for b in data.availability:
         db.add(AvailabilityBlock(
             user_id=current_user.id,
