@@ -8,6 +8,7 @@ from app.config import settings
 
 ALGORITHM = "HS256"
 password_hash = PasswordHash.recommended()
+DUMMY_HASH = password_hash.hash("not-a-real-password") # computed once at startup
 
 async def hash_password(password: str) -> str:
     return await run_in_threadpool(password_hash.hash, password)

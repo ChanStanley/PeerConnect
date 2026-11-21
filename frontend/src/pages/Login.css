@@ -127,6 +127,8 @@
 .g { font-weight: 700; font-size: 14px; }
 .foot { margin-top: 18px; text-align: center; font-size: 12px; color: var(--muted); }
 
+.error { margin: 0 0 12px; font-size: 12px; color: #b42318 }
+
 /* Phones and small windows */
 @media (max-width: 860px) {
   .login { grid-template-columns: 1fr; }

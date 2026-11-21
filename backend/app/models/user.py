@@ -15,4 +15,5 @@ class User(Base):
     # integrate this later probably
     # role = Column(String, default="student")
 
-    availability_blocks = relationship("AvailabilityBlock", uselist=True)
+    # for when we implement admin role for the deletes
+    availability_blocks = relationship("AvailabilityBlock", uselist=True, cascade="all, delete-orphan", passive_deletes=True)
