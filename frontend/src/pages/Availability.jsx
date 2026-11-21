@@ -110,7 +110,7 @@ export default function Availability() {
         },
       })
       clearDraft(user.id) // no need for drafts after saving
-      navigate('/matches') // swap to dashboard when it exits
+      navigate('/matches')
     } catch (err) {
       setError(err.message)
     } finally {
