@@ -15,7 +15,7 @@ class Course(Base):
     searching = Column(Boolean, index=True, default=True)
 
     user = relationship("User")
-    study_group = relationship("StudyGroup")
+    study_group = relationship("StudyGroup", uselist=False)
 
     __table_args__ = (
         Index(
@@ -25,5 +25,4 @@ class Course(Base):
             postgresql_ops={"embedding": "vector_cosine_ops"}
         ),
         UniqueConstraint("user_id", "name"),
-        UniqueConstraint("user_id", "description"),
     )

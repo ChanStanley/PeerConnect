@@ -1,7 +1,5 @@
 from sqlalchemy import select
-from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.concurrency import run_in_threadpool
 
 from app.embedding_model import generate_embeddings, generate_embedding_batch
 from app.schemas.course import CourseIn
@@ -12,18 +10,20 @@ class CourseRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
+    @staticmethod
+    def _embed_text(course: CourseIn) -> str:
+        return f"{course.name} {course.description}".strip()
+
     async def create(self, course: CourseIn, user_id: int):
-        embedding = await generate_embeddings(course.name + course.description)
+        embedding = await generate_embeddings(self._embed_text(course))
         self.db.add(Course(user_id=user_id, embedding=embedding, name=course.name, description=course.description))
 
     async def insert_list(self, courses: list[CourseIn], user_id: int):
-        texts = [(course.name + course.description) for course in courses]
-        embeddings = await generate_embedding_batch(texts)
-        courseList = [
-            Course(user_id=user_id, embedding=embedding, name=course.name, description=course.description) 
-            for embedding, course in zip(embeddings, courses)
-        ]
-        self.db.add_all(courseList)
+        embeddings = await generate_embedding_batch([self._embed_text(c) for c in courses])
+        self.db.add_all([
+            Course(user_id=user_id, embedding=e, name=c.name, description=c.description)
+            for e, c in zip(embeddings, courses)
+        ])
 
     async def get_availability(self, user_id: int) -> dict[int, AvailabilityBlock]:
         blocks = (await self.db.execute(

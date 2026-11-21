@@ -156,6 +156,8 @@ export default function Register()
                 id="email"
                 name="email"
                 type="email"
+                pattern=".+@.+\..+"
+                title="Enter a full email address, like you@university.edu"
                 className="input"
                 autoComplete="email"
                 placeholder="you@university.edu"
@@ -176,6 +178,7 @@ export default function Register()
                 autoComplete="new-password"
                 value={form.password}
                 onChange={handleChange}
+                minLength={8}
                 required
               />
             </div>
