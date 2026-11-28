@@ -107,3 +107,8 @@ async def create_availability_block(
     await db.commit()
 
     return  {"message": "availability block created"}
+
+
+@router.get("/studygroup/request")
+async def get_group_requests():
+    pass

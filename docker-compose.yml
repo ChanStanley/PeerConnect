@@ -15,7 +15,7 @@ services:
     image: redis:8
     container_name: peerconnect-redis
     restart: unless-stopped
-    pots:
+    ports:
       - "6379:6379"
 
 volumes:

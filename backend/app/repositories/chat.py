@@ -12,7 +12,7 @@ async def is_member(
             .where(StudyGroupMember.study_group_id == group_id, StudyGroupMember.user_id == user_id)
     )
 
-    return res.scalar_one_or_none is not None
+    return res.scalar_one_or_none() is not None
 
 async def create_message(
     db: AsyncSession,
@@ -32,9 +32,9 @@ async def get_history(
         before_id: int | None,
         limit: int = 50
 ):
-    q = select(StudyGroupMessage).where(StudyGroupMessage.id == group_id)
+    q = select(StudyGroupMessage).where(StudyGroupMessage.study_group_id == group_id)
     if before_id is not None:
-        q.where(StudyGroupMessage.id < before_id)
+        q = q.where(StudyGroupMessage.id < before_id)
 
     res = await db.execute(q.order_by(StudyGroupMessage.id.desc()).limit(limit))
     return list(reversed(res.scalars().all()))
